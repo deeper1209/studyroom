@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>스터디룸 예약</title>
+    <style>
+        :root{
+            --bg:#0f1724;
+            --card:#f8fafc;
+            --accent:#2563eb;
+            --muted:#6b7280;
+            --glass: rgba(255,255,255,0.06);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+        }
+        html,body{height:100%;margin:0;background:linear-gradient(180deg,#0b1220 0%, #071426 100%);color:var(--card);}
+        .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;flex-direction:column;}
+        .card{
+            width:100%;
+            max-width:720px;
+            background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            border-radius:16px;
+            box-shadow:0 10px 30px rgba(2,6,23,0.6);
+            padding:20px;
+            box-sizing:border-box;
+            backdrop-filter: blur(6px);
+            border:1px solid rgba(255,255,255,0.04);
+        }
+        .header{
+            display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px;
+        }
+        .brand{
+            display:flex;gap:12px;align-items:center;
+        }
+        .logo{
+            width:50px; /* 크기 50x50으로 변경 */
+            height:50px; /* 크기 50x50으로 변경 */
+            border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);
+            display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:white;box-shadow:0 6px 18px rgba(37,99,235,0.18);
+        }
+        .title{
+            font-size:18px;color:var(--card);line-height:1;
+        }
+        .subtitle{font-size:12px;color:var(--muted);margin-top:4px;}
+        .body{display:flex;gap:18px;flex-wrap:wrap;}
+        .left{flex:1 1 320px;min-width:220px}
+        .right{width:240px;min-width:200px;background:rgba(255,255,255,0.02);padding:12px;border-radius:12px}
+        .field{margin-bottom:12px}
+        .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+        .value{
+            background:transparent;color:var(--card);padding:8px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,0.04);
+            min-height:36px;display:flex;align-items:center;font-size:15px;
+        }
+        .value[contenteditable="true"]:focus{outline:none;border:1px solid rgba(37,99,235,0.9);box-shadow:0 6px 18px rgba(37,99,235,0.08)}
+        .meta{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+        .chip{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:13px}
+        .controls{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:18px;flex-wrap:wrap; width:100%; max-width:720px;}
+        button{
+            background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--card);padding:10px 14px;border-radius:10px;font-size:14px;
+            cursor:pointer;
+        }
+        button.primary{background:linear-gradient(90deg,var(--accent),#7c3aed);border:none;box-shadow:0 8px 20px rgba(124,58,237,0.12)}
+        .note{font-size:12px;color:var(--muted);margin-top:8px}
+        @media (max-width:520px){
+            .right{width:100%}
+            .controls{justify-content:stretch}
+        }
+        /* 사용자 정의 모달 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1e293b;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 300px;
+            color: var(--card);
+        }
+        .modal-content h3 {
+            font-size: 18px;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+        .modal-content p {
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .modal-buttons button {
+            flex: 1;
+        }
+        .modal-buttons button.primary {
+            background: var(--accent);
+        }
+        /* 로고 이미지 스타일 */
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card" id="card">
+            <div class="header">
+                <div class="brand">
+                    <div class="logo">
+                        <img src="https://i.imgur.com/jv4B6zz.png" alt="스터디룸 로고" onerror="this.onerror=null; this.src='https://placehold.co/50x50/0f172a/FFF?text=로고';" />
+                    </div>
+                    <div>
+                        <div class="title">스터디룸 예약</div>
+                        <div class="subtitle">터치하여 수정하세요</div>
+                    </div>
+                </div>
+            </div>
+            <div class="body">
+                <div class="left">
+                    <div class="field">
+                        <div class="label">지점명</div>
+                        <div class="value" id="branch" contenteditable="true">이룸 스터디룸 여의도점</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">주소</div>
+                        <div class="value" id="address" contenteditable="true">영등포구 여의대방로65길 10, 유니온타워</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">비고</div>
+                        <div class="value" id="note" contenteditable="true">2호점 - 4층 406호</div>
+                    </div>
+                </div>
+                <div class="right">
+                    <div class="field">
+                        <div class="label">예약일자</div>
+                        <div class="value" id="date" contenteditable="true">9월 7일</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">예약인원</div>
+                        <div class="value" id="people" contenteditable="true">6명</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">이용시간</div>
+                        <div class="value" id="time" contenteditable="true">오전 9:30 ~ 12:30 (3시간)</div>
+                    </div>
+                    <div style="margin-top:10px" class="note">편집 후 이미지로 공유하세요.</div>
+                </div>
+            </div>
+        </div>
+        <!-- 버튼을 카드 바깥으로 이동 -->
+        <div class="controls" role="group" aria-label="actions">
+            <button id="saveImage" class="primary">이미지 공유</button>
+            <button id="resetBtn">초기화</button>
+        </div>
+    </div>
+
+    <!-- 사용자 정의 모달 -->
+    <div id="myModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title"></h3>
+            <p id="modal-message"></p>
+            <div class="modal-buttons">
+                <button id="modal-confirm">확인</button>
+                <button id="modal-cancel" style="display:none;">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- html2canvas CDN for image export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNa5xNwqjQqjQq9gQjzG5aI2qfQv1Zs9+fGf6lK8a2e8u7Y6qg4x8v2g0kGm9E6v5ZzT3z9y6Qh2g7a1ZcYw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script>
+        // 초기값
+        const defaults = {
+            branch: '이룸 스터디룸 여의도점',
+            address: '영등포구 여의대방로65길 10, 유니온타워',
+            note: '2호점 - 4층 406호',
+            date: '9월 7일',
+            people: '6명',
+            time: '오전 9:30 ~ 12:30 (3시간)'
+        };
+
+        const el = id => document.getElementById(id);
+
+        // 사용자 정의 모달 함수
+        function showModal(message, title = '알림', onConfirm, onCancel) {
+            el('myModal').style.display = 'flex';
+            el('modal-title').textContent = title;
+            el('modal-message').textContent = message;
+            el('modal-confirm').style.display = 'inline-block';
+            el('modal-cancel').style.display = onCancel ? 'inline-block' : 'none';
+            
+            const handleConfirm = () => {
+                el('myModal').style.display = 'none';
+                if (onConfirm) onConfirm();
+                el('modal-confirm').removeEventListener('click', handleConfirm);
+                el('modal-cancel').removeEventListener('click', handleCancel);
+            };
+
+            const handleCancel = () => {
+                el('myModal').style.display = 'none';
+                if (onCancel) onCancel();
+                el('modal-confirm').removeEventListener('click', handleConfirm);
+                el('modal-cancel').removeEventListener('click', handleCancel);
+            };
+
+            el('modal-confirm').addEventListener('click', handleConfirm);
+            if (onCancel) {
+                el('modal-cancel').addEventListener('click', handleCancel);
+            }
+        }
+
+        // 초기값 설정
+        function resetDefaults() {
+            el('branch').textContent = defaults.branch;
+            el('address').textContent = defaults.address;
+            el('note').textContent = defaults.note;
+            el('date').textContent = defaults.date;
+            el('people').textContent = defaults.people;
+            el('time').textContent = defaults.time;
+        }
+
+        // 초기값 설정 함수 호출
+        resetDefaults();
+
+        // 이미지로 공유 (Web Share API 및 다운로드 폴백)
+        el('saveImage').addEventListener('click', async () => {
+            const node = el('card');
+            try {
+                const canvas = await html2canvas(node, { 
+                    scale: window.devicePixelRatio || 2, 
+                    backgroundColor: '#0f1724', // 배경색을 명확하게 지정
+                    // 외부 이미지를 처리하기 위한 옵션
+                    useCORS: true
+                });
+                
+                // Web Share API를 지원하는 경우
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await canvasToBlob(canvas)], 'reservation_card.png', { type: 'image/png' })] })) {
+                    const blob = await canvasToBlob(canvas);
+                    const file = new File([blob], 'reservation_card.png', { type: 'image/png' });
+                    await navigator.share({
+                        files: [file],
+                        title: '스터디룸 예약 확인서',
+                        text: '이룸 스터디룸 예약 정보입니다.'
+                    });
+                    showModal('이미지가 성공적으로 공유되었습니다.');
+                } else {
+                    // Web Share API를 지원하지 않는 경우, 파일 다운로드
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = 'reservation_card.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    showModal('이미지가 성공적으로 저장되었습니다.');
+                }
+            } catch(err) {
+                showModal('작업에 실패했습니다: ' + (err && err.message ? err.message : err));
+            }
+        });
+
+        // 캔버스를 Blob으로 변환하는 헬퍼 함수
+        function canvasToBlob(canvas) {
+          return new Promise(resolve => {
+            canvas.toBlob(resolve, 'image/png');
+          });
+        }
+
+        // 초기화
+        el('resetBtn').addEventListener('click', () => {
+            showModal('초기값으로 되돌리시겠어요? 편집 내용은 사라집니다.', '확인', resetDefaults, () => {});
+        });
+
+        // 편집 시 (간단 debounce)
+        let timer = null;
+        const editableEls = document.querySelectorAll('[contenteditable="true"]');
+        editableEls.forEach(node => {
+            node.addEventListener('input', () => {
+                clearTimeout(timer);
+                timer = setTimeout(()=> {
+                    // 현재는 별도 표시 없음
+                }, 600);
+            });
+        });
+    </script>
+</body>
+</html>
