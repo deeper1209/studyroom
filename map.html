@@ -11,26 +11,24 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #000;
+            background-color: #000; /* 이미지가 검은색 배경에 보이도록 설정 */
         }
 
-        .fullscreen-image {
+        .fit-image {
             position: fixed;
             top: 50%;
             left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
+            width: 100%; /* 이미지가 화면 가로에 맞춰지도록 설정 */
             height: auto;
             transform: translate(-50%, -50%);
-            object-fit: cover;
+            object-fit: contain; /* 이미지가 잘리지 않고 화면에 맞춰지도록 설정 */
         }
     </style>
 </head>
 <body>
 
-    <!-- 이미지를 전체 화면에 표시합니다. -->
-    <img src="https://i.imgur.com/5G51JLt.png" alt="전체 화면 이미지" class="fullscreen-image">
+    <!-- 이미지를 화면에 맞춰 잘림 없이 표시합니다. -->
+    <img src="https://i.imgur.com/5G51JLt.png" alt="스터디룸 위치 이미지" class="fit-image">
 
 </body>
 </html>
