@@ -3,32 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스터디룸 위치</title>
+    <title>반응형 이미지 뷰어</title>
     <style>
+        /*
+         * 모든 요소의 여백과 패딩을 초기화합니다.
+         */
         body, html {
             margin: 0;
             padding: 0;
+            overflow: hidden; /* 스크롤바를 숨깁니다. */
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            background-color: #000; /* 이미지가 검은색 배경에 보이도록 설정 */
+            position: relative;
         }
 
-        .fit-image {
-            position: fixed;
-            top: 50%;
+        /*
+         * 컨테이너를 화면 전체에 꽉 채우고 flexbox를 사용하여
+         * 이미지를 중앙에 정렬합니다.
+         */
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw; /* 뷰포트 너비의 100% */
+            height: 100vh; /* 뷰포트 높이의 100% */
+            background-color: #000; /* 배경색을 검은색으로 설정합니다. */
+        }
+
+        /*
+         * 이미지 자체에 반응형 스타일을 적용합니다.
+         * object-fit: contain을 사용하여 이미지의 비율을 유지하며 컨테이너에 맞춥니다.
+         * 가로 또는 세로 모드에 따라 이미지가 화면에 꽉 차게 보입니다.
+         * 이미지의 최대 너비와 최대 높이를 100%로 설정하여 부모 컨테이너를 벗어나지 않게 합니다.
+         */
+        .responsive-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /*
+         * 버튼 컨테이너 스타일
+         */
+        .button-container {
+            position: fixed; /* 화면 하단에 고정합니다. */
+            bottom: 20px;
             left: 50%;
-            width: 100%; /* 이미지가 화면 가로에 맞춰지도록 설정 */
-            height: auto;
-            transform: translate(-50%, -50%);
-            object-fit: contain; /* 이미지가 잘리지 않고 화면에 맞춰지도록 설정 */
+            transform: translateX(-50%); /* X축으로 -50% 이동하여 수평 중앙에 위치시킵니다. */
+            display: flex; /* 버튼을 가로로 정렬합니다. */
+            gap: 12px; /* 버튼 사이에 12px의 간격을 둡니다. */
+            z-index: 100; /* 다른 요소 위에 표시되도록 z-index를 높게 설정합니다. */
+            flex-wrap: nowrap; /* 버튼이 줄바꿈되지 않고 항상 한 줄에 나오도록 합니다. */
+        }
+
+        /*
+         * 버튼 스타일
+         */
+        .transport-button {
+            padding: 10px 18px; /* 패딩을 줄여서 버튼을 작게 만듭니다. */
+            border-radius: 30px; /* 부드러운 알약 모양 */
+            border: 2px solid #00c0ff; /* 테두리 색상 */
+            background: linear-gradient(45deg, #00c0ff, #ff00c0); /* 그라데이션 배경 */
+            background-size: 200% 200%;
+            color: white;
+            font-size: 14px; /* 글자 크기를 14px로 줄입니다. */
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s ease; /* 모든 속성에 부드러운 전환 효과를 줍니다. */
+            animation: gradient-animation 5s ease infinite;
+            white-space: nowrap; /* 텍스트가 줄바꿈되지 않게 합니다. */
+        }
+        
+        /*
+         * 버튼에 마우스를 올렸을 때의 효과
+         */
+        .transport-button:hover {
+            transform: scale(1.05); /* 버튼이 5% 커지는 효과 */
+            background-position: right center;
+        }
+
+        /*
+         * 배경 그라데이션 애니메이션
+         */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 상태 메시지 스타일 */
+        #status-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            z-index: 101;
+            display: none;
+        }
+
+        /* 새로운 텍스트 스타일 */
+        .info-text {
+            color: white;
+            font-size: 14px;
+            align-self: center;
+            white-space: nowrap;
+            /* 글자 그림자 효과 추가 */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
         }
     </style>
+    <!-- 카카오맵 SDK 로드를 위한 스크립트 태그 -->
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=6b0e3d86b06c623bc15383b891a22ab7&libraries=services"></script>
 </head>
 <body>
 
-    <!-- 이미지를 화면에 맞춰 잘림 없이 표시합니다. -->
-    <img src="https://i.imgur.com/5G51JLt.png" alt="스터디룸 위치 이미지" class="fit-image">
+    <div class="image-container">
+        <!--
+             * 사용자님이 제공한 이미지 URL을 src 속성에 넣습니다.
+             * Alt 텍스트는 이미지의 내용을 간략하게 설명합니다.
+             * 이는 접근성을 위한 중요한 요소입니다.
+        -->
+        <img src="https://i.imgur.com/CfvWqP1.png" alt="이미지를 화면에 꽉 채워 보여주는 뷰어" class="responsive-image">
+    </div>
 
+    <!--
+         * 이동수단 버튼을 담는 컨테이너
+    -->
+    <div class="button-container">
+        <p class="info-text">카카오맵이 설치되어 있어야 실행됩니다.</p>
+        <button class="transport-button" onclick="openKakaoMap('walking')">길찾기</button>
+    </div>
+
+    <div id="status-message"></div>
+
+    <script>
+        // 목적지 주소와 좌표를 고정합니다.
+        const DESTINATION_NAME = "유니온타워";
+        const DESTINATION_LAT = 37.519961;
+        const DESTINATION_LON = 126.938833;
+
+        // Geolocation API를 사용하여 현재 위치를 가져와 길찾기 URL을 생성하는 함수
+        function openKakaoMap(transportMode) {
+            const statusMessage = document.getElementById('status-message');
+            statusMessage.style.display = 'block';
+            statusMessage.textContent = '현재 위치를 찾는 중입니다...';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        // 위치 정보가 성공적으로 감지되면 길찾기 URL 생성
+                        statusMessage.textContent = '카카오맵을 여는 중입니다...';
+                        const startLat = position.coords.latitude;
+                        const startLon = position.coords.longitude;
+                        
+                        // 길찾기 URL 생성 및 열기
+                        const url = `https://map.kakao.com/link/to/${encodeURIComponent(DESTINATION_NAME)},${DESTINATION_LAT},${DESTINATION_LON}?sX=${startLon}&sY=${startLat}&eX=${DESTINATION_LON}&eY=${DESTINATION_LAT}&by=${getKakaoMapMode(transportMode)}`;
+                        
+                        window.open(url, '_blank');
+                        statusMessage.style.display = 'none';
+                    },
+                    (error) => {
+                        // 위치 정보 가져오기 실패 또는 권한 거부 시 사용자에게 알림
+                        console.error('위치 정보를 가져오는데 실패했습니다.', error);
+                        statusMessage.textContent = '위치 정보 가져오기 실패: 권한을 허용해주세요.';
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                // 브라우저가 Geolocation을 지원하지 않는 경우 사용자에게 알림
+                statusMessage.textContent = '죄송합니다. 이 브라우저는 위치 정보를 지원하지 않습니다.';
+            }
+        }
+
+        // 카카오맵 길찾기 모드 변환 함수
+        function getKakaoMapMode(mode) {
+            switch(mode) {
+                case 'driving':
+                    return 'CAR';
+                case 'walking':
+                    return 'WALK';
+                case 'transit':
+                    return 'PUBLICTRANSIT';
+                default:
+                    return 'CAR';
+            }
+        }
+    </script>
 </body>
 </html>
